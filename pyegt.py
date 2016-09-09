@@ -57,38 +57,32 @@ class MoranProcess:
 
     def _fixation_probability_matrix(self, mutant_index, resident_index):
         sub_matrix = self.game_matrix[[mutant_index, resident_index]][:, [mutant_index, resident_index]]
-        suma = np.zeros(self.population_size - 1)
-        for k in range(1, self.population_size):
-            multiplicator = np.ones(k)
-            for j in range(1, k + 1):
+        suma = np.zeros(self.population_size, dtype=np.float64)
+        gamma = 1
+        try:
+            for i in range(1, self.population_size):
                 (payoff_mutant, payoff_resident) = (1.0 / (self.population_size - 1.0)) * (np.dot(sub_matrix, np.array(
-                    [j, self.population_size - j])) - np.diagonal(sub_matrix))
+                    [i, self.population_size - i])) - np.diagonal(sub_matrix))
                 if self.is_exponential_mapping:
                     fitness_mutant = math.e ** (self.intensity_of_selection * payoff_mutant)
                     fitness_resident = math.e ** (self.intensity_of_selection * payoff_resident)
                 else:
                     fitness_mutant = 1.0 - self.intensity_of_selection + self.intensity_of_selection * payoff_mutant
                     fitness_resident = 1.0 - self.intensity_of_selection + self.intensity_of_selection * payoff_resident
-                multiplicator[j - 1] = (fitness_resident / fitness_mutant)
-            suma[k - 1] = np.prod(multiplicator)
-        if any(np.isinf(suma)):
-            return 0.0
-        try:
-            complex_expression = math.fsum(suma)
+                gamma *= (fitness_resident / fitness_mutant)
+                suma[i] = gamma
+            return 1/math.fsum(suma)
         except OverflowError:
             return 0.0
-        if np.isinf(complex_expression):
-            return 0.0
-        return 1.0 / (1.0 + complex_expression)
 
     def _fixation_probability_pfunction(self, mutant_index, resident_index):
-        suma = np.zeros(self.population_size - 1)
-        for k in range(1, self.population_size):
-            multiplicator = np.ones(k)
-            for j in range(1, k + 1):
+        suma = np.zeros(self.population_size, dtype=np.float64)
+        gamma = 1
+        try:
+            for i in range(1, self.population_size):
                 strategies = np.zeros(self.number_of_strategies, dtype=int)
-                strategies[mutant_index] = j
-                strategies[resident_index] = self.population_size - j
+                strategies[mutant_index] = i
+                strategies[resident_index] = self.population_size - i
                 payoff_mutant = self.payoff_function(
                     mutant_index, population_composition=strategies, **self.kwargs)
                 payoff_resident = self.payoff_function(
@@ -99,17 +93,11 @@ class MoranProcess:
                 else:
                     fitness_mutant = 1.0 - self.intensity_of_selection + self.intensity_of_selection * payoff_mutant
                     fitness_resident = 1.0 - self.intensity_of_selection + self.intensity_of_selection * payoff_resident
-                multiplicator[j - 1] = (fitness_resident / fitness_mutant)
-            suma[k - 1] = np.prod(multiplicator)
-        if any(np.isinf(suma)):
-            return 0.0
-        try:
-            complex_expression = math.fsum(suma)
+                gamma *= (fitness_resident / fitness_mutant)
+                suma[i] = gamma
+            return 1 / math.fsum(suma)
         except OverflowError:
             return 0.0
-        if np.isinf(complex_expression):
-            return 0.0
-        return 1.0 / (1.0 + complex_expression)
 
     def monomorphous_transition_matrix(self):
         """

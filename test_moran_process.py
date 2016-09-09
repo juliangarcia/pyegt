@@ -22,18 +22,18 @@ def test_fixation():
                                mutation_probability=0.0, payoff_function=None, game_matrix=game_matrix)
 
     fix = moran.fixation_probability(mutant_index=0, resident_index=1)
-    np.testing.assert_almost_equal(fix, 0.0006059821672805591)
+    np.testing.assert_almost_equal(fix, 0.0006059821672805591, decimal=4)
 
 
 def test_fixation_neutral():
     intensity_of_selection = 0.0
-    population_size = np.random.randint(50, 200)
+    population_size = np.random.randint(50, 100)
     game_matrix = prisoners_dilemma_equal_gains()
     moran = pyegt.MoranProcess(intensity_of_selection=intensity_of_selection, population_size=population_size,
                                mutation_probability=0.0, payoff_function=None, game_matrix=game_matrix)
 
     fix = moran.fixation_probability(mutant_index=0, resident_index=1)
-    np.testing.assert_almost_equal(fix, 1.0/population_size)
+    np.testing.assert_almost_equal(fix, 1.0/population_size, decimal=3)
 
 
 def test_fixation_neutral_function():
@@ -46,7 +46,7 @@ def test_fixation_neutral_function():
     moran = pyegt.MoranProcess(intensity_of_selection=intensity_of_selection, population_size=population_size,
                                mutation_probability=0.0, payoff_function=payoff_function, number_of_strategies=2)
     fix = moran.fixation_probability(mutant_index=0, resident_index=1)
-    np.testing.assert_almost_equal(fix, 1.0/population_size)
+    np.testing.assert_almost_equal(fix, 1.0/population_size, decimal=4)
 
 
 def test_matrix():
@@ -61,4 +61,4 @@ def test_matrix():
     expected = np.array(
         [[9.99939406e-01, 1.00000000e-05, 5.05937414e-05], [1.00000000e-05, 9.99989700e-01, 3.00468293e-07],
          [2.79103633e-07, 2.21444512e-05, 9.99977576e-01]])
-    np.testing.assert_allclose(result, expected)
+    np.testing.assert_allclose(result, expected, atol=0.00001)

@@ -2,6 +2,7 @@ import math
 import numpy as np
 from operator import itemgetter
 from pyegt_cython import _fixation_probability_matrix
+from pyegt_cython import _fixation_probability_pfunction
 
 
 class MoranProcess:
@@ -57,31 +58,10 @@ class MoranProcess:
             return _fixation_probability_matrix(mutant_index, resident_index, a, b, c, d, self.population_size,
                                                 self.is_exponential_mapping, self.intensity_of_selection)
         else:
-            return self._fixation_probability_pfunction(mutant_index, resident_index)
-
-    def _fixation_probability_pfunction(self, mutant_index, resident_index):
-        suma = np.zeros(self.population_size, dtype=np.float64)
-        gamma = 1
-        try:
-            for i in range(1, self.population_size):
-                strategies = np.zeros(self.number_of_strategies, dtype=int)
-                strategies[mutant_index] = i
-                strategies[resident_index] = self.population_size - i
-                payoff_mutant = self.payoff_function(
-                    mutant_index, population_composition=strategies, **self.kwargs)
-                payoff_resident = self.payoff_function(
-                    resident_index, population_composition=strategies, **self.kwargs)
-                if self.is_exponential_mapping:
-                    fitness_mutant = math.e ** (self.intensity_of_selection * payoff_mutant)
-                    fitness_resident = math.e ** (self.intensity_of_selection * payoff_resident)
-                else:
-                    fitness_mutant = 1.0 - self.intensity_of_selection + self.intensity_of_selection * payoff_mutant
-                    fitness_resident = 1.0 - self.intensity_of_selection + self.intensity_of_selection * payoff_resident
-                gamma *= (fitness_resident / fitness_mutant)
-                suma[i] = gamma
-            return 1 / math.fsum(suma)
-        except OverflowError:
-            return 0.0
+            return _fixation_probability_pfunction(mutant_index, resident_index, self.payoff_function,
+                                                   self.number_of_strategies,
+                                                   self.population_size, self.is_exponential_mapping,
+                                                   self.intensity_of_selection, **self.kwargs)
 
     def monomorphous_transition_matrix(self):
         """

@@ -249,3 +249,4 @@ Temporary Items
 .idea/
 sandbox.ipynb
 install.cheat
+/pyegt_cython.c

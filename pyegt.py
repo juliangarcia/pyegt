@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from operator import itemgetter
+from pyegt_cython import _fixation_probability_matrix
 
 
 class MoranProcess:
@@ -51,29 +52,12 @@ class MoranProcess:
 
     def fixation_probability(self, mutant_index, resident_index):
         if self.using_matrix:
-            return self._fixation_probability_matrix(mutant_index, resident_index)
+            [[a, b], [c, d]] = self.game_matrix[[mutant_index, resident_index]][:, [mutant_index, resident_index]]
+
+            return _fixation_probability_matrix(mutant_index, resident_index, a, b, c, d, self.population_size,
+                                                self.is_exponential_mapping, self.intensity_of_selection)
         else:
             return self._fixation_probability_pfunction(mutant_index, resident_index)
-
-    def _fixation_probability_matrix(self, mutant_index, resident_index):
-        sub_matrix = self.game_matrix[[mutant_index, resident_index]][:, [mutant_index, resident_index]]
-        suma = np.zeros(self.population_size, dtype=np.float64)
-        gamma = 1
-        try:
-            for i in range(1, self.population_size):
-                (payoff_mutant, payoff_resident) = (1.0 / (self.population_size - 1.0)) * (np.dot(sub_matrix, np.array(
-                    [i, self.population_size - i])) - np.diagonal(sub_matrix))
-                if self.is_exponential_mapping:
-                    fitness_mutant = math.e ** (self.intensity_of_selection * payoff_mutant)
-                    fitness_resident = math.e ** (self.intensity_of_selection * payoff_resident)
-                else:
-                    fitness_mutant = 1.0 - self.intensity_of_selection + self.intensity_of_selection * payoff_mutant
-                    fitness_resident = 1.0 - self.intensity_of_selection + self.intensity_of_selection * payoff_resident
-                gamma *= (fitness_resident / fitness_mutant)
-                suma[i] = gamma
-            return 1/math.fsum(suma)
-        except OverflowError:
-            return 0.0
 
     def _fixation_probability_pfunction(self, mutant_index, resident_index):
         suma = np.zeros(self.population_size, dtype=np.float64)
@@ -122,36 +106,35 @@ class MoranProcess:
 
 
 def stationary_distribution(transition_matrix):
-        """
-        Computes the stationary_distribution of a markov chain. The matrix is given by rows.
+    """
+    Computes the stationary_distribution of a markov chain. The matrix is given by rows.
 
-        Parameters
-        ----------
-        transition_matrix: ndarray (must be a numpy array)
+    Parameters
+    ----------
+    transition_matrix: ndarray (must be a numpy array)
 
-        Returns
-        -------
-        out: ndarray
+    Returns
+    -------
+    out: ndarray
 
-        Examples
-        -------
-        >>>stationary_distribution(np.array([[0.1,0.9],[0.9,0.1]]))
-        Out[1]: array([ 0.5,  0.5])
-        >>>stationary_distribution(np.array([[0.1,0.0],[0.9,0.1]]))
-        Out[1]: array([ 1.,  0.])
-        >>>stationary_distribution(np.array([[0.6,0.4],[0.2,0.8]]))
-        Out[1]: array([ 0.33333333,  0.66666667])
-        """
-        eigenvalues, eigenvectors = np.linalg.eig(transition_matrix.T)
-        # builds a dictionary with position, eigenvalue
-        # and retrieves from this, the index of the largest eigenvalue
-        index = max(
-            zip(range(0, len(eigenvalues)), eigenvalues), key=itemgetter(1))[0]
-        # returns the normalized vector corresponding to the
-        # index of the largest eigenvalue
-        # and gets rid of potential complex values
-        vector = np.real(eigenvectors[:, index])
-        # normalise
-        vector /= np.sum(vector, dtype=float)
-        return vector
-
+    Examples
+    -------
+    >>>stationary_distribution(np.array([[0.1,0.9],[0.9,0.1]]))
+    Out[1]: array([ 0.5,  0.5])
+    >>>stationary_distribution(np.array([[0.1,0.0],[0.9,0.1]]))
+    Out[1]: array([ 1.,  0.])
+    >>>stationary_distribution(np.array([[0.6,0.4],[0.2,0.8]]))
+    Out[1]: array([ 0.33333333,  0.66666667])
+    """
+    eigenvalues, eigenvectors = np.linalg.eig(transition_matrix.T)
+    # builds a dictionary with position, eigenvalue
+    # and retrieves from this, the index of the largest eigenvalue
+    index = max(
+        zip(range(0, len(eigenvalues)), eigenvalues), key=itemgetter(1))[0]
+    # returns the normalized vector corresponding to the
+    # index of the largest eigenvalue
+    # and gets rid of potential complex values
+    vector = np.real(eigenvectors[:, index])
+    # normalise
+    vector /= np.sum(vector, dtype=float)
+    return vector

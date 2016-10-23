@@ -7,7 +7,8 @@ import cython
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef double _fixation_probability_matrix(int mutant_index, int resident_index, double a, double b, double c, double d,
-                                 int population_size, bint is_exponential_mapping, double intensity_of_selection):
+                                          int population_size, bint is_exponential_mapping,
+                                          double intensity_of_selection):
     #cdef np.ndarray
     suma = np.zeros(population_size, dtype=np.float64)
     cdef double gamma = 1.0
@@ -27,11 +28,9 @@ cpdef double _fixation_probability_matrix(int mutant_index, int resident_index, 
     except OverflowError:
         return 0.0
 
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def _fixation_probability_pfunction(int mutant_index, int resident_index, payoff_function, int number_of_strategies,
-                                 int population_size, bint is_exponential_mapping, double intensity_of_selection, **kwargs):
+cpdef _fixation_probability_pfunction(int mutant_index, int resident_index, payoff_function, int number_of_strategies, int population_size, bint is_exponential_mapping, double intensity_of_selection, **kwargs):
     suma = np.zeros(population_size, dtype=np.float64)
     cdef double gamma = 1.0
     try:
@@ -40,9 +39,9 @@ def _fixation_probability_pfunction(int mutant_index, int resident_index, payoff
             strategies[mutant_index] = i
             strategies[resident_index] = population_size - i
             payoff_mutant = payoff_function(
-            mutant_index, population_composition=strategies, **kwargs)
+                mutant_index, population_composition=strategies, **kwargs)
             payoff_resident = payoff_function(
-            resident_index, population_composition=strategies, **kwargs)
+                resident_index, population_composition=strategies, **kwargs)
             if is_exponential_mapping:
                 fitness_mutant = math.e ** (intensity_of_selection * payoff_mutant)
                 fitness_resident = math.e ** (intensity_of_selection * payoff_resident)

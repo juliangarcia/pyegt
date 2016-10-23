@@ -6,7 +6,7 @@ import cython
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef double _fixation_probability_matrix(int mutant_index, int resident_index, double a, double b, double c, double d,
+def _fixation_probability_matrix(int mutant_index, int resident_index, double a, double b, double c, double d,
                                           int population_size, bint is_exponential_mapping,
                                           double intensity_of_selection):
     #cdef np.ndarray
@@ -30,7 +30,7 @@ cpdef double _fixation_probability_matrix(int mutant_index, int resident_index, 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef _fixation_probability_pfunction(int mutant_index, int resident_index, payoff_function, int number_of_strategies, int population_size, bint is_exponential_mapping, double intensity_of_selection, **kwargs):
+def _fixation_probability_pfunction(int mutant_index, int resident_index, payoff_function, int number_of_strategies, int population_size, bint is_exponential_mapping, double intensity_of_selection, **kwargs):
     suma = np.zeros(population_size, dtype=np.float64)
     cdef double gamma = 1.0
     try:
